@@ -2,6 +2,8 @@
 
 A web-based medical diagnostic application that provides analysis for medical images and symptoms. This tool offers preliminary medical assessments through image analysis and symptom evaluation.
 
+![App Screenshot](/medical-diagnostic/readme.png)
+
 ## Features
 - Medical Image Analysis (X-rays, MRIs, CT scans, skin conditions)
 - Symptom-based Analysis
