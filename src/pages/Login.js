@@ -26,7 +26,6 @@ function Login() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // Simple login - just set logged in state
     localStorage.setItem('isLoggedIn', 'true');
     navigate('/'); // Navigate back to home
     window.location.reload(); // Update navbar
