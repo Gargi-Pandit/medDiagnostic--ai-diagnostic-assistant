@@ -12,6 +12,8 @@ import ImageDiagnosis from './pages/ImageDiagnosis';
 import SymptomDiagnosis from './pages/SymptomDiagnosis';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+
 
 const theme = createTheme({
   typography: {
@@ -135,6 +137,7 @@ function App() {
               <Route path="/symptom-diagnosis" element={<SymptomDiagnosis />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/dashboard" element={<Dashboard />} />
             </Routes>
           </Container>
         </Box>

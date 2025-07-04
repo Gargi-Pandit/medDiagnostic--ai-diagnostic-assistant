@@ -6,15 +6,18 @@ import {
   Autocomplete, 
   TextField, 
   Button,
-  Box,
   CircularProgress,
   Alert,
   List,
   ListItem,
   ListItemText,
-  Divider
+  Divider,
+  Card,
+  CardContent,
 } from '@mui/material';
 import { analyzeSymptoms } from '../services/diagnosisService';
+import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/diagnosisService';
 
 const commonSymptoms = [
   "Fever",
@@ -25,7 +28,16 @@ const commonSymptoms = [
   "Fatigue",
   "Nausea",
   "Dizziness",
-  // Add more symptoms...
+  "Abdominal pain",
+  "Back pain",
+  "Joint pain",
+  "Skin rash",
+  "Swelling",
+  "Loss of appetite",
+  "Weight loss",
+  "Insomnia",
+  "Anxiety",
+  "Depression"
 ];
 
 const SymptomDiagnosis = () => {
@@ -33,15 +45,22 @@ const SymptomDiagnosis = () => {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  // Check if user is authenticated
+  if (!authService.isAuthenticated()) {
+    navigate('/login');
+    return null;
+  }
 
   const handleAnalyze = async () => {
     try {
       setLoading(true);
       setError(null);
       const result = await analyzeSymptoms(selectedSymptoms);
-      setAnalysis(result);
+      setAnalysis(result.result);
     } catch (err) {
-      setError('Error analyzing symptoms. Please try again.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -85,34 +104,29 @@ const SymptomDiagnosis = () => {
         )}
 
         {analysis && (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Possible Conditions
-            </Typography>
-            <List>
-              {analysis.conditions.map((condition, index) => (
-                <React.Fragment key={condition.name}>
-                  <ListItem>
-                    <ListItemText
-                      primary={condition.name}
-                      secondary={
-                        <>
-                          <Typography component="span" variant="body2">
-                            Probability: {(condition.probability * 100).toFixed(1)}%
-                          </Typography>
-                          <br />
-                          <Typography component="span" variant="body2">
-                            Severity: {condition.severity}
-                          </Typography>
-                        </>
-                      }
-                    />
-                  </ListItem>
-                  {index < analysis.conditions.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-          </Box>
+          <Card sx={{ mt: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Analysis Results
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                <strong>Possible Conditions:</strong>
+              </Typography>
+              <List>
+                {analysis.possibleConditions.map((condition, index) => (
+                  <React.Fragment key={condition.name}>
+                    <ListItem>
+                      <ListItemText
+                        primary={condition.name}
+                        secondary={`Probability: ${(condition.probability * 100).toFixed(1)}%`}
+                      />
+                    </ListItem>
+                    {index < analysis.possibleConditions.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
+            </CardContent>
+          </Card>
         )}
       </Paper>
     </Container>

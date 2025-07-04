@@ -1,64 +1,71 @@
 import React, { useState } from 'react';
 import {
-  Box,
   Container,
   Paper,
-  Typography,
   TextField,
   Button,
-  FormControlLabel,
-  Checkbox,
+  Typography,
+  Box,
+  Alert,
   Link,
-  Divider,
-  IconButton,
 } from '@mui/material';
-import GoogleIcon from '@mui/icons-material/Google';
-import FacebookIcon from '@mui/icons-material/Facebook';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/diagnosisService';
 
 function Login() {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
-    rememberMe: false,
   });
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    localStorage.setItem('isLoggedIn', 'true');
-    navigate('/'); // Navigate back to home
-    window.location.reload(); // Update navbar
-  };
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'rememberMe' ? checked : value
-    }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      await authService.login(formData.username, formData.password);
+      navigate('/');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Container maxWidth="sm">
-      <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
-        <Typography variant="h4" align="center" gutterBottom fontWeight="bold">
-          Welcome Back
-        </Typography>
-        <Typography variant="body1" align="center" color="text.secondary" mb={4}>
-          Please enter your details to sign in
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Paper sx={{ p: 4 }}>
+        <Typography variant="h4" gutterBottom align="center">
+          Login
         </Typography>
 
-        <form onSubmit={handleLogin}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Box component="form" onSubmit={handleSubmit}>
           <TextField
             fullWidth
-            label="Email"
-            name="email"
-            type="email"
-            value={formData.email}
+            label="Username or Email"
+            name="username"
+            value={formData.username}
             onChange={handleChange}
             margin="normal"
-            variant="outlined"
+            required
+            helperText="You can login with your username or email address"
           />
           <TextField
             fullWidth
@@ -68,74 +75,27 @@ function Login() {
             value={formData.password}
             onChange={handleChange}
             margin="normal"
-            variant="outlined"
+            required
           />
-
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  name="rememberMe"
-                  checked={formData.rememberMe}
-                  onChange={handleChange}
-                  color="primary"
-                />
-              }
-              label="Remember me"
-            />
-            <Link href="#" underline="hover" color="primary">
-              Forgot password?
-            </Link>
-          </Box>
-
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            size="large"
-            sx={{ mt: 3 }}
+            sx={{ mt: 3, mb: 2 }}
+            disabled={loading}
           >
-            Sign In
+            {loading ? 'Logging in...' : 'Login'}
           </Button>
+        </Box>
 
-          <Divider sx={{ my: 3 }}>or</Divider>
-
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<GoogleIcon />}
-              sx={{ py: 1.5 }}
-            >
-              Google
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<FacebookIcon />}
-              sx={{ py: 1.5 }}
-            >
-              Facebook
-            </Button>
-          </Box>
-
-          <Typography align="center" color="text.secondary">
-            Don't have an account?{' '}
-            <Link
-              component="button"
-              type="button"
-              underline="hover"
-              onClick={() => navigate('/signup')}
-              color="primary"
-              fontWeight="500"
-            >
-              Sign up
-            </Link>
-          </Typography>
-        </form>
+        <Box sx={{ textAlign: 'center', mt: 2 }}>
+          <Link href="/signup" variant="body2">
+            Don't have an account? Sign up
+          </Link>
+        </Box>
       </Paper>
     </Container>
   );
 }
 
-export default Login; 
+export default Login;

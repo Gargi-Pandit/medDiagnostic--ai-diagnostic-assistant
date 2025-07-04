@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Box,
@@ -11,11 +11,11 @@ import {
   MenuItem,
   useTheme,
   useMediaQuery,
-  Divider,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { authService } from '../services/diagnosisService';
 
 const pages = [
   { title: 'Home', path: '/' },
@@ -25,16 +25,38 @@ const pages = [
 
 function Navbar() {
   const [anchorElNav, setAnchorElNav] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState('');
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const location = useLocation();
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    localStorage.getItem('isLoggedIn') === 'true'
-  );
-  const [userRole, setUserRole] = useState(
-    localStorage.getItem('userRole') || 'patient'
-  );
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const loggedIn = authService.isAuthenticated();
+      setIsLoggedIn(loggedIn);
+      if (loggedIn) {
+        setUsername(localStorage.getItem('username') || '');
+      } else {
+        setUsername('');
+      }
+    };
+
+    checkAuth();
+    
+    // Listen for storage changes (when user logs in/out in another tab)
+    window.addEventListener('storage', checkAuth);
+    
+    // Listen for custom login event
+    window.addEventListener('userLogin', checkAuth);
+    window.addEventListener('userLogout', checkAuth);
+    
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('userLogin', checkAuth);
+      window.removeEventListener('userLogout', checkAuth);
+    };
+  }, []);
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -50,10 +72,9 @@ function Navbar() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userRole');
+    authService.logout();
     setIsLoggedIn(false);
-    setUserRole('patient');
+    setUsername('');
     navigate('/');
   };
 
@@ -93,13 +114,14 @@ function Navbar() {
           </Typography>
 
           {/* Mobile menu */}
-          <Box sx={{ marginLeft: 'auto', display: { xs: 'flex', md: 'none' } }}>
+          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
             <IconButton
               size="large"
+              aria-label="account of current user"
               aria-controls="menu-appbar"
               aria-haspopup="true"
               onClick={handleOpenNavMenu}
-              color="primary"
+              color="inherit"
             >
               <MenuIcon />
             </IconButton>
@@ -108,12 +130,12 @@ function Navbar() {
               anchorEl={anchorElNav}
               anchorOrigin={{
                 vertical: 'bottom',
-                horizontal: 'right',
+                horizontal: 'left',
               }}
               keepMounted
               transformOrigin={{
                 vertical: 'top',
-                horizontal: 'right',
+                horizontal: 'left',
               }}
               open={Boolean(anchorElNav)}
               onClose={handleCloseNavMenu}
@@ -122,145 +144,86 @@ function Navbar() {
               }}
             >
               {pages.map((page) => (
-                <MenuItem 
-                  key={page.path} 
-                  onClick={() => handleNavigate(page.path)}
-                  selected={location.pathname === page.path}
-                >
+                <MenuItem key={page.title} onClick={() => handleNavigate(page.path)}>
                   <Typography textAlign="center">{page.title}</Typography>
                 </MenuItem>
               ))}
-              <Divider sx={{ my: 1 }} />
-              {isLoggedIn ? (
-                <MenuItem onClick={handleLogout}>
-                  Logout
-                </MenuItem>
-              ) : (
-                <>
-                  <MenuItem onClick={() => handleNavigate('/login')}>
-                    Login
-                  </MenuItem>
-                  <MenuItem onClick={() => handleNavigate('/signup')}>
-                    Sign up
-                  </MenuItem>
-                </>
-              )}
             </Menu>
           </Box>
 
           {/* Logo for mobile */}
-          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-            <LocalHospitalIcon 
-              sx={{ 
-                display: { xs: 'flex', md: 'none' }, 
-                mr: 1,
-                color: 'primary.main'
-              }} 
-            />
-            <Typography
-              variant="h6"
-              noWrap
-              sx={{
-                display: { xs: 'flex', md: 'none' },
-                fontWeight: 700,
-                color: 'text.primary',
-                textDecoration: 'none',
-                cursor: 'pointer',
-              }}
-              onClick={() => handleNavigate('/')}
-            >
-              MedDiagnostic
-            </Typography>
-          </Box>
+          <LocalHospitalIcon 
+            sx={{ 
+              display: { xs: 'flex', md: 'none' }, 
+              mr: 1,
+              color: 'primary.main'
+            }} 
+          />
+          <Typography
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{ 
+              flexGrow: 1, 
+              display: { xs: 'flex', md: 'none' },
+              fontWeight: 700,
+              color: 'text.primary',
+              cursor: 'pointer',
+            }}
+            onClick={() => handleNavigate('/')}
+          >
+            MedDiagnostic
+          </Typography>
 
           {/* Desktop menu */}
-          <Box sx={{ 
-            marginLeft: 'auto',
-            display: { xs: 'none', md: 'flex' },
-            gap: 2,
-            alignItems: 'center'
-          }}>
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             {pages.map((page) => (
               <Button
-                key={page.path}
+                key={page.title}
                 onClick={() => handleNavigate(page.path)}
-                sx={{
-                  color: location.pathname === page.path ? 'primary.main' : 'text.secondary',
+                sx={{ 
+                  my: 2, 
+                  color: 'text.primary', 
                   display: 'block',
                   fontWeight: location.pathname === page.path ? 600 : 400,
-                  position: 'relative',
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    bottom: 0,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: location.pathname === page.path ? '100%' : '0%',
-                    height: '3px',
-                    backgroundColor: 'primary.main',
-                    transition: 'width 0.3s ease',
-                    borderRadius: '2px',
-                  },
-                  '&:hover::after': {
-                    width: '100%',
-                  },
                 }}
               >
                 {page.title}
               </Button>
             ))}
-            
-            {/* Auth buttons */}
-            <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+          </Box>
+
+          {/* Auth buttons */}
+          <Box sx={{ flexGrow: 0 }}>
             {isLoggedIn ? (
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={handleLogout}
-                sx={{
-                  borderRadius: '8px',
-                  px: 3,
-                  '&:hover': {
-                    backgroundColor: 'primary.main',
-                    color: 'white',
-                  },
-                }}
-              >
-                Logout
-              </Button>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  {username}
+                </Typography>
+                <Button 
+                  color="inherit" 
+                  onClick={handleLogout}
+                  sx={{ color: 'text.primary' }}
+                >
+                  Logout
+                </Button>
+              </Box>
             ) : (
-              <>
-                <Button
-                  variant="outlined"
-                  color="primary"
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button 
+                  color="inherit" 
                   onClick={() => handleNavigate('/login')}
-                  sx={{
-                    borderRadius: '8px',
-                    px: 3,
-                    '&:hover': {
-                      backgroundColor: 'primary.main',
-                      color: 'white',
-                    },
-                  }}
+                  sx={{ color: 'text.primary' }}
                 >
                   Login
                 </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
+                <Button 
+                  variant="contained" 
                   onClick={() => handleNavigate('/signup')}
-                  sx={{
-                    borderRadius: '8px',
-                    px: 3,
-                    boxShadow: 'none',
-                    '&:hover': {
-                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                    },
-                  }}
                 >
-                  Sign up
+                  Sign Up
                 </Button>
-              </>
+              </Box>
             )}
           </Box>
         </Toolbar>
@@ -269,4 +232,4 @@ function Navbar() {
   );
 }
 
-export default Navbar; 
+export default Navbar;

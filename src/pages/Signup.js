@@ -1,61 +1,99 @@
 import React, { useState } from 'react';
 import {
-  Box,
   Container,
   Paper,
-  Typography,
   TextField,
   Button,
+  Typography,
+  Box,
+  Alert,
   Link,
-  Divider,
-  IconButton,
 } from '@mui/material';
-import GoogleIcon from '@mui/icons-material/Google';
-import FacebookIcon from '@mui/icons-material/Facebook';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/diagnosisService';
 
 function Signup() {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const handleSubmit = (e) => {
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle signup logic here
-    console.log('Signup data:', formData);
+    setLoading(true);
+    setError('');
+
+    // Validation
+    if (!validateEmail(formData.email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await authService.signup(formData.username, formData.email, formData.password);
+      // Automatically log in after successful signup
+      await authService.login(formData.username, formData.password);
+      navigate('/');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Container maxWidth="sm">
-      <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
-        <Typography variant="h4" align="center" gutterBottom fontWeight="bold">
-          Create Account
-        </Typography>
-        <Typography variant="body1" align="center" color="text.secondary" mb={4}>
-          Please fill in your information to get started
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Paper sx={{ p: 4 }}>
+        <Typography variant="h4" gutterBottom align="center">
+          Sign Up
         </Typography>
 
-        <form onSubmit={handleSubmit}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Box component="form" onSubmit={handleSubmit}>
           <TextField
             fullWidth
-            label="Full Name"
-            name="name"
-            value={formData.name}
+            label="Username"
+            name="username"
+            value={formData.username}
             onChange={handleChange}
             margin="normal"
-            variant="outlined"
+            required
+            helperText="Choose a unique username"
           />
           <TextField
             fullWidth
@@ -65,7 +103,8 @@ function Signup() {
             value={formData.email}
             onChange={handleChange}
             margin="normal"
-            variant="outlined"
+            required
+            helperText="Enter a valid email address"
           />
           <TextField
             fullWidth
@@ -75,7 +114,8 @@ function Signup() {
             value={formData.password}
             onChange={handleChange}
             margin="normal"
-            variant="outlined"
+            required
+            helperText="Password must be at least 6 characters"
           />
           <TextField
             fullWidth
@@ -85,57 +125,27 @@ function Signup() {
             value={formData.confirmPassword}
             onChange={handleChange}
             margin="normal"
-            variant="outlined"
+            required
           />
-
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            size="large"
-            sx={{ mt: 3 }}
+            sx={{ mt: 3, mb: 2 }}
+            disabled={loading}
           >
-            Create Account
+            {loading ? 'Signing up...' : 'Sign Up'}
           </Button>
+        </Box>
 
-          <Divider sx={{ my: 3 }}>or</Divider>
-
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<GoogleIcon />}
-              sx={{ py: 1.5 }}
-            >
-              Google
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<FacebookIcon />}
-              sx={{ py: 1.5 }}
-            >
-              Facebook
-            </Button>
-          </Box>
-
-          <Typography align="center" color="text.secondary">
-            Already have an account?{' '}
-            <Link
-              component="button"
-              type="button"
-              underline="hover"
-              onClick={() => navigate('/login')}
-              color="primary"
-              fontWeight="500"
-            >
-              Sign in
-            </Link>
-          </Typography>
-        </form>
+        <Box sx={{ textAlign: 'center', mt: 2 }}>
+          <Link href="/login" variant="body2">
+            Already have an account? Login
+          </Link>
+        </Box>
       </Paper>
     </Container>
   );
 }
 
-export default Signup; 
+export default Signup;

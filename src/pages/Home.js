@@ -10,9 +10,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 import ImageSearchIcon from '@mui/icons-material/ImageSearch';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import { authService } from '../services/diagnosisService';
 
 function Home() {
   const navigate = useNavigate();
+  const isLoggedIn = authService.isAuthenticated();
 
   const diagnosticOptions = [
     {
@@ -57,59 +60,96 @@ function Home() {
 
       {/* Main Options */}
       <Grid container spacing={4} sx={{ mb: 8 }}>
-        {diagnosticOptions.map((option, index) => (
-          <Grid item xs={12} md={6} key={index}>
-            <Paper 
-              sx={{ 
+        {diagnosticOptions.map((option) => (
+          <Grid item xs={12} md={6} key={option.title}>
+            <Paper
+              elevation={0}
+              sx={{
                 p: 4,
                 height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                transition: 'transform 0.2s',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 3,
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
                 '&:hover': {
                   transform: 'translateY(-4px)',
-                  boxShadow: 3,
+                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
                 },
               }}
+              onClick={() => navigate(option.path)}
             >
-              <Box sx={{ 
-                mb: 3, 
-                color: option.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                {option.icon}
+              <Box sx={{ textAlign: 'center', mb: 3 }}>
+                <Box sx={{ color: option.color, mb: 2 }}>
+                  {option.icon}
+                </Box>
+                <Typography variant="h5" gutterBottom fontWeight={600}>
+                  {option.title}
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  {option.description}
+                </Typography>
               </Box>
-              <Typography variant="h5" gutterBottom fontWeight="bold">
-                {option.title}
-              </Typography>
-              <Typography variant="body1" color="text.secondary" paragraph sx={{ mb: 4 }}>
-                {option.description}
-              </Typography>
-              <Button 
+              <Button
                 variant="contained"
-                size="large"
-                onClick={() => navigate(option.path)}
+                fullWidth
                 sx={{
-                  mt: 'auto',
                   bgcolor: option.color,
                   '&:hover': {
                     bgcolor: option.color,
-                    filter: 'brightness(0.9)',
+                    opacity: 0.9,
                   },
                 }}
               >
-                Start Analysis
+                Get Started
               </Button>
             </Paper>
           </Grid>
         ))}
       </Grid>
 
-      {/* Important Notice */}
+      {/* Dashboard Button for Logged-in Users */}
+      {isLoggedIn && (
+        <Box sx={{ textAlign: 'center', mb: 8 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 3,
+              maxWidth: '400px',
+              mx: 'auto',
+            }}
+          >
+            <Box sx={{ color: '#7c3aed', mb: 2 }}>
+              <DashboardIcon sx={{ fontSize: 48 }} />
+            </Box>
+            <Typography variant="h6" gutterBottom fontWeight={600}>
+              View Your Dashboard
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Check your analysis history and track your health data
+            </Typography>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={() => navigate('/dashboard')}
+              sx={{
+                bgcolor: '#7c3aed',
+                '&:hover': {
+                  bgcolor: '#7c3aed',
+                  opacity: 0.9,
+                },
+              }}
+            >
+              Go to Dashboard
+            </Button>
+          </Paper>
+        </Box>
+      )}
+
+      {/* Disclaimer */}
       <Paper 
         elevation={0} 
         sx={{ 
@@ -131,4 +171,4 @@ function Home() {
   );
 }
 
-export default Home; 
+export default Home;

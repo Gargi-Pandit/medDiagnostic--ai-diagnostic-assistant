@@ -30,10 +30,12 @@ A web-based medical diagnostic application that provides analysis for medical im
 3. Use the sample images provided in the application for testing
 
 ## Project Structure
-- `/src/components` - Reusable UI components
-- `/src/pages` - Main page components
-- `/src/mockData` - Sample data for testing
-- `/public/images/samples` - Sample medical images
+- `/frontend/` - React frontend app
+- `/frontend/src/components` - Reusable UI components
+- `/frontend/src/pages` - Main page components
+- `/frontend/src/mockData` - Sample data for testing
+- `/frontend/public/images/samples` - Sample medical images
+- `/backend/` - Backend code (Node.js/Express, etc.)
 
 ## Important Notes
 - This is a demonstration project
